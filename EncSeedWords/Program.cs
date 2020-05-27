@@ -31,20 +31,28 @@ namespace pwEnc
             // The solution to do the most good likely is the easiest to use
             // and so often used
             var encSeedWords = EncryptSeedWords(seedWords, masterSecretBytes);
+            // then mac
             var decSeedWords = DecryptSeedWords(encSeedWords, masterSecretBytes);
             Console.WriteLine(decSeedWords);
         }
 
-        // use Authenticated Encryption with Associated Data
+        // use Authenticated Encryption, no Associated Data
         private static byte[] EncryptSeedWords(string seedWords, byte[] masterSecretBytes)
         {
             var salt = Concat(new UTF8Encoding(false).GetBytes("masterSecret"), masterSecretBytes);
 
 			using Rfc2898DeriveBytes derive = new Rfc2898DeriveBytes(masterSecretBytes, salt, 2048, HashAlgorithmName.SHA512);
-            var k_masterSecret = derive.GetBytes(32); // for 256 bit aes
+            var k1_masterSecret = derive.GetBytes(32); // for 256 bit aes
             var iv = salt.SafeSubarray(0, 16); // aes has 128 bit blocks
 
-            return EncryptStringToBytes_Aes(seedWords, k_masterSecret, iv);
+            var encSeedWords = EncryptStringToBytes_Aes(seedWords, k1_masterSecret, iv);
+
+            // somewhat arbitrary but matching k1 keysize for HMAC
+            var k2_masterSecret = derive.GetBytes(32);
+            using HMACSHA512 hmac = new HMACSHA512(k2_masterSecret);
+            byte[] encSeedWordsHMAC = new byte[hmac.HashSize / 8];
+            encSeedWordsHMAC = hmac.ComputeHash(encSeedWords);
+            return Concat(encSeedWordsHMAC, encSeedWords);
         }
 
         private static string DecryptSeedWords(byte[] encSeedWords, byte[] masterSecretBytes)
@@ -52,10 +60,12 @@ namespace pwEnc
             var salt = Concat(new UTF8Encoding(false).GetBytes("masterSecret"), masterSecretBytes);
 
             using Rfc2898DeriveBytes derive = new Rfc2898DeriveBytes(masterSecretBytes, salt, 2048, HashAlgorithmName.SHA512);
-            var k_masterSecret = derive.GetBytes(32); // for 256 bit aes
+            var k1_masterSecret = derive.GetBytes(32); // for 256 bit aes
             var iv = salt.SafeSubarray(0,16); // aes is 128 bit blocks
-
-            return DecryptStringFromBytes_Aes(encSeedWords, k_masterSecret, iv);
+            var k2_masterSecret = derive.GetBytes(32);
+            using HMACSHA512 hmac = new HMACSHA512(k2_masterSecret);
+            VerifyEncSeedWordsMAC(k2_masterSecret, encSeedWords);
+            return DecryptStringFromBytes_Aes(encSeedWords.SafeSubarray(hmac.HashSize / 8), k1_masterSecret, iv);
         }
 
         static byte[] EncryptStringToBytes_Aes(string plainText, byte[] Key, byte[] IV)
@@ -141,6 +151,46 @@ namespace pwEnc
             return plaintext;
         }
 
+        // Compares the key in the source file with a new key created for the data portion of the file. If the keys
+        // compare the data has not been tampered with.
+        public static bool VerifyEncSeedWordsMAC(byte[] key, byte[] storedEncSeed)
+        {
+            bool err = false;
+            // Initialize the keyed hash object.
+            using (HMACSHA512 hmac = new HMACSHA512(key))
+            {
+                // Create an array to hold the keyed hash value read from the file.
+                byte[] storedHash = new byte[hmac.HashSize / 8];
+                storedHash = storedEncSeed.SafeSubarray(0, storedHash.Length);
+
+                // Compute the hash of the remaining contents of the file.
+                // The stream is properly positioned at the beginning of the content,
+                // immediately after the stored hash value.
+                var encSeedWords = storedEncSeed.SafeSubarray(storedHash.Length);
+                byte[] computedHash = hmac.ComputeHash(encSeedWords);
+                // compare the computed hash with the stored value
+
+                for (int i = 0; i < storedHash.Length; i++)
+                {
+                    if (computedHash[i] != storedHash[i])
+                    {
+                        err = true;
+                    }
+                }
+
+            }
+            if (err)
+            {
+                Console.WriteLine("Hash values differ! Signed file has been tampered with!");
+                return false;
+            }
+            else
+            {
+                Console.WriteLine("Hash values agree -- no tampering occurred.");
+                return true;
+            }
+        } //end VerifyFile
+
         static Byte[] Concat(Byte[] source1, Byte[] source2)
         {
             //Most efficient way to merge two arrays this according to http://stackoverflow.com/questions/415291/best-way-to-combine-two-or-more-byte-arrays-in-c-sharp
@@ -150,15 +200,6 @@ namespace pwEnc
 
             return buffer;
         }
-
-		internal static Aes CreateAES256()
-		{
-			var aes = Aes.Create();
-			aes.KeySize = 256;
-			aes.Mode = CipherMode.CBC;
-			aes.IV = new byte[16];
-			return aes;
-		}
 	}
 
 	internal static class ByteArrayExtensions
