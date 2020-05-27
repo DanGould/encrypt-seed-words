@@ -1,5 +1,10 @@
-﻿using System;
+﻿using NBitcoin;
+using NBitcoin.Crypto;
+using NBitcoin.DataEncoders;
+using NBitcoin.Secp256k1;
+using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -7,6 +12,10 @@ namespace pwEnc
 {
     public static class SeedWordsCrypto
     {
+        public static void Main(string[] args)
+        {
+            // should have made a .NET Standard 2.1 Library but this is a POC
+        }
 
         // use Authenticated Encryption, no Associated Data
         public static byte[] EncryptSeedWords(string seedWords, byte[] masterSecretBytes)
@@ -22,9 +31,9 @@ namespace pwEnc
             // somewhat arbitrary but matching k1 keysize for HMAC
             var k2_masterSecret = derive.GetBytes(32);
             using HMACSHA512 hmac = new HMACSHA512(k2_masterSecret);
-            byte[] encSeedWordsHMAC = new byte[hmac.HashSize / 8];
-            encSeedWordsHMAC = hmac.ComputeHash(encSeedWords);
-            return Concat(encSeedWordsHMAC, encSeedWords);
+            byte[] tag = new byte[hmac.HashSize / 8];
+            tag = hmac.ComputeHash(Concat(iv, encSeedWords));
+            return Concat(tag, encSeedWords);
         }
 
         public static string DecryptSeedWords(byte[] encSeedWords, byte[] masterSecretBytes)
@@ -132,19 +141,19 @@ namespace pwEnc
             using (HMACSHA512 hmac = new HMACSHA512(key))
             {
                 // Create an array to hold the keyed hash value read from the file.
-                byte[] storedHash = new byte[hmac.HashSize / 8];
-                storedHash = storedEncSeed.SafeSubarray(0, storedHash.Length);
+                byte[] storedTag = new byte[hmac.HashSize / 8];
+                storedTag = storedEncSeed.SafeSubarray(0, storedTag.Length);
 
                 // Compute the hash of the remaining contents of the file.
                 // The stream is properly positioned at the beginning of the content,
                 // immediately after the stored hash value.
-                var encSeedWords = storedEncSeed.SafeSubarray(storedHash.Length);
+                var encSeedWords = storedEncSeed.SafeSubarray(storedTag.Length);
                 byte[] computedHash = hmac.ComputeHash(encSeedWords);
                 // compare the computed hash with the stored value
 
-                for (int i = 0; i < storedHash.Length; i++)
+                for (int i = 0; i < storedTag.Length; i++)
                 {
-                    if (computedHash[i] != storedHash[i])
+                    if (computedHash[i] != storedTag[i])
                     {
                         err = true;
                     }
@@ -153,7 +162,7 @@ namespace pwEnc
             }
             if (err)
             {
-                Console.WriteLine("Hash values differ! Signed file has been tampered with!");
+                Console.WriteLine("Hash values differ! Signed ciphertext has been tampered with!");
                 return false;
             }
             else
