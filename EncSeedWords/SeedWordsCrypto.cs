@@ -1,43 +1,15 @@
-﻿using NBitcoin;
-using NBitcoin.Crypto;
-using NBitcoin.DataEncoders;
-using NBitcoin.Secp256k1;
-using System;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace pwEnc
 {
-    class MainClass
+    public static class SeedWordsCrypto
     {
-        public static void Main(string[] args)
-        {
-            Console.WriteLine("Hello World!");
-
-            string passphrase = "margaretthatcheris110%sexy";
-            string seedWords = "keep coach tower bacon you scout easy velvet cube tennis reject uphold dynamic mystery zebra";
-            Network network = Network.Main;
-
-            // What Wasabi does now
-            var mnemonic = new Mnemonic(seedWords);
-            var extKey = mnemonic.DeriveExtKey(passphrase);
-            var encMasterSecret = extKey.PrivateKey.GetEncryptedBitcoinSecret(passphrase, network); // BIP38 @NBitcoin
-			var masterSecretBytes = extKey.PrivateKey.ToBytes();
-            var decMasterSecretBytes = encMasterSecret.GetKey(passphrase).ToBytes();
-            Console.WriteLine(masterSecretBytes.SequenceEqual(decMasterSecretBytes));
-
-            // The solution to do the most good likely is the easiest to use
-            // and so often used
-            var encSeedWords = EncryptSeedWords(seedWords, masterSecretBytes);
-            // then mac
-            var decSeedWords = DecryptSeedWords(encSeedWords, masterSecretBytes);
-            Console.WriteLine(decSeedWords);
-        }
 
         // use Authenticated Encryption, no Associated Data
-        private static byte[] EncryptSeedWords(string seedWords, byte[] masterSecretBytes)
+        public static byte[] EncryptSeedWords(string seedWords, byte[] masterSecretBytes)
         {
             var salt = Concat(new UTF8Encoding(false).GetBytes("masterSecret"), masterSecretBytes);
 
@@ -55,7 +27,7 @@ namespace pwEnc
             return Concat(encSeedWordsHMAC, encSeedWords);
         }
 
-        private static string DecryptSeedWords(byte[] encSeedWords, byte[] masterSecretBytes)
+        public static string DecryptSeedWords(byte[] encSeedWords, byte[] masterSecretBytes)
         {
             var salt = Concat(new UTF8Encoding(false).GetBytes("masterSecret"), masterSecretBytes);
 
