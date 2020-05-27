@@ -1,8 +1,6 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pwEnc", "pwEnc\pwEnc.csproj", "{903552BD-3449-4C7E-B590-490585FFEFCD}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EncSeedWords", "EncSeedWords\EncSeedWords.csproj", "{5E61F464-02B6-4F25-AA23-2D659D5252D1}"
 EndProject
 Global
@@ -11,10 +9,6 @@ Global
 		Release|anycpu = Release|anycpu
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{903552BD-3449-4C7E-B590-490585FFEFCD}.Debug|anycpu.ActiveCfg = Debug|anycpu
-		{903552BD-3449-4C7E-B590-490585FFEFCD}.Debug|anycpu.Build.0 = Debug|anycpu
-		{903552BD-3449-4C7E-B590-490585FFEFCD}.Release|anycpu.ActiveCfg = Release|anycpu
-		{903552BD-3449-4C7E-B590-490585FFEFCD}.Release|anycpu.Build.0 = Release|anycpu
 		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Debug|anycpu.ActiveCfg = Debug|Any CPU
 		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Debug|anycpu.Build.0 = Debug|Any CPU
 		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Release|anycpu.ActiveCfg = Release|Any CPU
