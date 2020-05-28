@@ -15,6 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\EncSeedWords\EncSeedWords.csproj" />
+    <ProjectReference Include="..\pwEnc\pwEnc.csproj" />
   </ItemGroup>
 </Project>

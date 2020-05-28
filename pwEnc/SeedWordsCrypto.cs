@@ -1,22 +1,12 @@
-﻿using NBitcoin;
-using NBitcoin.Crypto;
-using NBitcoin.DataEncoders;
-using NBitcoin.Secp256k1;
-using System;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
+using NBitcoin;
 
 namespace pwEnc
 {
     public static class SeedWordsCrypto
     {
-        public static void Main(string[] args)
-        {
-            // should have made a .NET Standard 2.1 Library but this is a POC
-        }
-
         // use Authenticated Encryption with Associated Data
         public static (byte[] encSeedWords, byte[] iv, byte[] salt) AuthEncString(string seedWords, byte[] masterSecretBytes)
         {

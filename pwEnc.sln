@@ -1,9 +1,9 @@
 
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EncSeedWords", "EncSeedWords\EncSeedWords.csproj", "{5E61F464-02B6-4F25-AA23-2D659D5252D1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pwEnc.Tests", "pwEnc.Tests\pwEnc.Tests.csproj", "{41AD910E-FAFA-4588-8B15-A74BED40D027}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "pwEnc", "pwEnc\pwEnc.csproj", "{E7679610-577B-46DA-98BA-21A768916BB6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,13 +11,13 @@ Global
 		Release|anycpu = Release|anycpu
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Debug|anycpu.ActiveCfg = Debug|Any CPU
-		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Debug|anycpu.Build.0 = Debug|Any CPU
-		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Release|anycpu.ActiveCfg = Release|Any CPU
-		{5E61F464-02B6-4F25-AA23-2D659D5252D1}.Release|anycpu.Build.0 = Release|Any CPU
 		{41AD910E-FAFA-4588-8B15-A74BED40D027}.Debug|anycpu.ActiveCfg = Debug|Any CPU
 		{41AD910E-FAFA-4588-8B15-A74BED40D027}.Debug|anycpu.Build.0 = Debug|Any CPU
 		{41AD910E-FAFA-4588-8B15-A74BED40D027}.Release|anycpu.ActiveCfg = Release|Any CPU
 		{41AD910E-FAFA-4588-8B15-A74BED40D027}.Release|anycpu.Build.0 = Release|Any CPU
+		{E7679610-577B-46DA-98BA-21A768916BB6}.Debug|anycpu.ActiveCfg = Debug|Any CPU
+		{E7679610-577B-46DA-98BA-21A768916BB6}.Debug|anycpu.Build.0 = Debug|Any CPU
+		{E7679610-577B-46DA-98BA-21A768916BB6}.Release|anycpu.ActiveCfg = Release|Any CPU
+		{E7679610-577B-46DA-98BA-21A768916BB6}.Release|anycpu.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
