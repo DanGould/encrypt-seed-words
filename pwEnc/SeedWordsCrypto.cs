@@ -8,6 +8,7 @@ namespace pwEnc
     public static class SeedWordsCrypto
     {
         // use Authenticated Encryption with Associated Data
+        // encrypt seedWords using masterSecretBytes -> k
         public static (byte[] encSeedWords, byte[] iv, byte[] salt) AuthEncString(string seedWords, byte[] masterSecretBytes)
         {
             var salt = RandomUtils.GetBytes(512 / 8); // for SHA512

@@ -1,4 +1,3 @@
-using System;
 using NBitcoin;
 using Xunit;
 using static pwEnc.SeedWordsCrypto;
@@ -35,8 +34,6 @@ namespace pwEnc.Tests
             //The real deal
             for (int i = 0; i < 5; i++)
             {
-                // FIXME: random passphrases of various lenghts as well?
-                passphrase = "";
                 mnemonic = new Mnemonic(Wordlist.English, WordCount.Twelve);
                 seedWords = mnemonic.ToString();
                 extKey = mnemonic.DeriveExtKey(passphrase);
