@@ -28,8 +28,8 @@ namespace pwEnc.Tests
             Assert.Equal(masterSecretBytes, decMasterSecretBytes);
             // The solution to do the most good likely is the easiest to use
             // and so, often used
-            var encSeedWords = EncryptSeedWords(seedWords, masterSecretBytes);
-            var decSeedWords = DecryptSeedWords(encSeedWords, masterSecretBytes);
+            (byte[] encSeedWords, byte[] iv, byte[] salt) = AuthEncString(seedWords, masterSecretBytes);
+            var decSeedWords = AuthDec(encSeedWords, masterSecretBytes, iv, salt);
             Assert.Equal(seedWords, decSeedWords);
 
             //The real deal
@@ -41,8 +41,8 @@ namespace pwEnc.Tests
                 seedWords = mnemonic.ToString();
                 extKey = mnemonic.DeriveExtKey(passphrase);
                 masterSecretBytes = extKey.PrivateKey.ToBytes();
-                encSeedWords = EncryptSeedWords(seedWords, masterSecretBytes);
-                decSeedWords = DecryptSeedWords(encSeedWords, masterSecretBytes);
+                (encSeedWords, iv, salt) = AuthEncString(seedWords, masterSecretBytes);
+                decSeedWords = AuthDec(encSeedWords, masterSecretBytes, iv, salt);
                 Assert.Equal(seedWords, decSeedWords);
             }
         }

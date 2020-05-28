@@ -17,33 +17,30 @@ namespace pwEnc
             // should have made a .NET Standard 2.1 Library but this is a POC
         }
 
-        // use Authenticated Encryption, no Associated Data
-        public static byte[] EncryptSeedWords(string seedWords, byte[] masterSecretBytes)
+        // use Authenticated Encryption with Associated Data
+        public static (byte[] encSeedWords, byte[] iv, byte[] salt) AuthEncString(string seedWords, byte[] masterSecretBytes)
         {
-            var salt = Concat(new UTF8Encoding(false).GetBytes("masterSecret"), masterSecretBytes);
+            var salt = RandomUtils.GetBytes(512 / 8); // for SHA512
+		    using Rfc2898DeriveBytes derive = new Rfc2898DeriveBytes(masterSecretBytes, salt, 2048, HashAlgorithmName.SHA512);
+            byte[] k1_masterSecret = derive.GetBytes(256 / 8); // for 256 bit aes
+            byte[] iv = RandomUtils.GetBytes(128 / 8); // aes has 128 bit blocks
+            byte[] c = EncryptStringToBytes_Aes(seedWords, k1_masterSecret, iv);
 
-			using Rfc2898DeriveBytes derive = new Rfc2898DeriveBytes(masterSecretBytes, salt, 2048, HashAlgorithmName.SHA512);
-            var k1_masterSecret = derive.GetBytes(32); // for 256 bit aes
-            var iv = salt.SafeSubarray(0, 16); // aes has 128 bit blocks
-
-            var encSeedWords = EncryptStringToBytes_Aes(seedWords, k1_masterSecret, iv);
-
-            // somewhat arbitrary but matching k1 keysize for HMAC
-            var k2_masterSecret = derive.GetBytes(32);
+            // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hmacsha512.-ctor?view=netcore-3.1#System_Security_Cryptography_HMACSHA512__ctor_System_Byte___
+            var k2_masterSecret = derive.GetBytes(128);
             using HMACSHA512 hmac = new HMACSHA512(k2_masterSecret);
             byte[] tag = new byte[hmac.HashSize / 8];
-            tag = hmac.ComputeHash(Concat(iv, encSeedWords));
-            return Concat(tag, encSeedWords);
+            tag = hmac.ComputeHash(Concat(iv, c));
+            var encSeedWords = Concat(tag, c);
+            return (encSeedWords, iv, salt);
         }
 
-        public static string DecryptSeedWords(byte[] encSeedWords, byte[] masterSecretBytes)
+        public static string AuthDec(byte[] encSeedWords, byte[] masterSecretBytes, byte[] iv, byte[] salt)
         {
-            var salt = Concat(new UTF8Encoding(false).GetBytes("masterSecret"), masterSecretBytes);
-
             using Rfc2898DeriveBytes derive = new Rfc2898DeriveBytes(masterSecretBytes, salt, 2048, HashAlgorithmName.SHA512);
-            var k1_masterSecret = derive.GetBytes(32); // for 256 bit aes
-            var iv = salt.SafeSubarray(0,16); // aes is 128 bit blocks
-            var k2_masterSecret = derive.GetBytes(32);
+            var k1_masterSecret = derive.GetBytes(256 / 8); // for 256 bit aes
+            // https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.hmacsha512.-ctor?view=netcore-3.1#System_Security_Cryptography_HMACSHA512__ctor_System_Byte___
+            var k2_masterSecret = derive.GetBytes(128);
             using HMACSHA512 hmac = new HMACSHA512(k2_masterSecret);
             VerifyEncSeedWordsMAC(k2_masterSecret, encSeedWords);
             return DecryptStringFromBytes_Aes(encSeedWords.SafeSubarray(hmac.HashSize / 8), k1_masterSecret, iv);
@@ -62,6 +59,7 @@ namespace pwEnc
 
             // Create an Aes object
             // with the specified key and IV.
+            // uses cbc mode with PKCS7 padding
             using (Aes aesAlg = Aes.Create())
             {
                 aesAlg.Key = Key;
@@ -162,12 +160,12 @@ namespace pwEnc
             }
             if (err)
             {
-                Console.WriteLine("Hash values differ! Signed ciphertext has been tampered with!");
+                Console.WriteLine("MAC values differ! Signed ciphertext has been tampered with!");
                 return false;
             }
             else
             {
-                Console.WriteLine("Hash values agree -- no tampering occurred.");
+                Console.WriteLine("MAC values agree -- no tampering occurred.");
                 return true;
             }
         } //end VerifyFile
